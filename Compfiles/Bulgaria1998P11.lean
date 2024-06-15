@@ -47,17 +47,18 @@ problem bulgaria1998_p11
     (h : 3 * m * A = (m + 3)^n + 1) : Odd A := by
   -- First show that n must be positive.
   cases n with
-  | zero => exfalso
-            simp only [Nat.zero_eq, pow_zero] at h
-            apply_fun (· % 3) at h
-            simp[Nat.mul_mod] at h
+  | zero =>
+    apply_fun (· % 3) at h
+    simp[Nat.mul_mod] at h
+    -- @dreshna I don't understand why the goal changes to h,
+    -- and why this is enough to dispatch with the goal.
   | succ n =>
 
   -- We prove by contradiction.
   -- Assume, on the contrary, that A is even.
   by_contra hno
   -- Then m is even.
-  have hae : Even A := Iff.mpr Nat.even_iff_not_odd hno
+  have hae : Even A := Nat.even_iff_not_odd.mpr hno
   have hme : Even m := by
     cases' hae with k hk
     rw [hk, show k + k = 2 * k by ring] at h
@@ -94,7 +95,7 @@ problem bulgaria1998_p11
       rw[hk] at h1
       have h1' : 0 % 3 = ( m ^ (k + k) + 1) % 3 := h1
       rw[Nat.add_mod, Nat.pow_mod, h3, ←Nat.two_mul, pow_mul, Nat.pow_mod,
-         show 2 ^ 2 % 3 = 1 by rfl] at h1'
+        show 2 ^ 2 % 3 = 1 by rfl] at h1'
       simp at h1'
     · exact hn
 
@@ -106,4 +107,3 @@ problem bulgaria1998_p11
   -- is odd.
   -- ...
   sorry
-
