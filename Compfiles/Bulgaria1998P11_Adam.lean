@@ -20,7 +20,7 @@ Let m,n be natural numbers such that
 is an integer. Prove that A is odd.
 -/
 
-namespace Bulgaria1998P11
+namespace Bulgaria1998P11_Adam
 
 snip begin
 
@@ -143,9 +143,49 @@ theorem n_odd_and_m_eq_2_mod_3 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : O
       ring
     contradiction
 
-snip end
+lemma mul_right {a b : ℕ} (c : ℕ) (H : a = b ) : (a * c = b * c) := by
+  rw[H]
 
-lemma two_n_and_rest_factorisation (m : ℕ) (even_m : Even m) (h: 0 < m) : ∃ (l : ℕ) (k : ℕ), 1 ≤ l ∧ Odd k ∧ m = 2 ^ l * k := by
+theorem Nat.add_sub_self_one_right (a : Nat) (H: 1 ≤ a) : a - 1 + 1 = a := by
+  match a with
+  | 0 =>
+    contradiction
+  | 1 =>
+    rfl
+  | k + 1 =>
+  calc ((k + 1) - 1) + 1 = (k + (1 - 1)) + 1 := by rw[Nat.add_sub_assoc (Nat.le_refl 1) k]
+  _ = k + 1 := by ring
+
+theorem Nat.sub_add_self_right (a : Nat) (b : Nat) (H: b ≤ a) : a - b + b = a := by
+  match b with
+  | 0 =>
+    rfl
+  | l + 1 =>
+    have l_le_a : l ≤ a := by linarith
+    have IH := Nat.sub_add_self_right a l l_le_a
+    rw[← Nat.sub_sub a l 1]
+    rw[show l + 1 = 1 + l by ring]
+    rw[show a - l - 1 + (1 + l) =  (a - l - 1 + 1) + l by ring]
+    rw[Nat.add_sub_self_one_right (a - l)]
+    exact IH
+    linarith
+
+lemma not_one_le_k {k : ℕ} (h : ¬1 ≤ k) : k = 0 := by
+  simp_all only [not_le, Nat.lt_one_iff]
+
+lemma two_le_pow_two (l : ℕ) : 2 ≤ 2 ^ (l + 1) := by
+  match l with
+    | 0 =>
+      simp
+    | 1 =>
+      simp
+    | l + 1 =>
+      have IH := two_le_pow_two l
+      ring_nf at IH
+      rw[show 2 ^ (l + 1 + 1) = (2 ^ l * 2) * 2 by ring_nf]
+      linarith
+
+lemma two_n_and_rest_factorisation (m : ℕ) (even_m : Even m) (h: 0 < m) : ∃ (l : ℕ) (m₁ : ℕ), 1 ≤ l ∧ Odd m₁ ∧ m = 2 ^ l * m₁ := by
   match m with
   | 0 =>
     contradiction
@@ -154,8 +194,20 @@ lemma two_n_and_rest_factorisation (m : ℕ) (even_m : Even m) (h: 0 < m) : ∃ 
   | m + 2 =>
     have even_m2 := even_m
     obtain ⟨m', m'H⟩ := even_m
-    have m'_m_relationship : m' = m/2 + 1 := sorry
-    have zero_lt_m': 0 < m' := sorry
+    have m_m'_relationship : m = 2 * m' - 2 := by
+      rw[show 2 * m' = m' + m' by ring]
+      rw[← m'H]
+      rw[Nat.add_sub_self_right m 2]
+    have one_le_m' : 1 ≤ m' := by
+      rename_i m_1
+      subst m_m'_relationship
+      simp_all only [pos_add_self_iff, even_add_self]
+      exact h
+    have m'_m_relationship : m' = m /2 + 1 := by
+      rw[m_m'_relationship]
+      rw[← Nat.mul_sub_left_distrib 2 m' 1]
+      field_simp
+    have zero_lt_m': 0 < m' := by linarith
     by_cases m'_even : Even m'
     · have IH := two_n_and_rest_factorisation m' m'_even zero_lt_m'
       obtain ⟨l, k, lower_level⟩ := IH
@@ -166,19 +218,92 @@ lemma two_n_and_rest_factorisation (m : ℕ) (even_m : Even m) (h: 0 < m) : ∃ 
       · exact le_add_left (Nat.le_refl 1)
       · constructor
         · exact lower_level.right.left
-        · sorry
+        · obtain ⟨_, ⟨k_odd: Odd k, lower_level_statement : m / 2 + 1 = 2 ^ l * k ⟩⟩ := lower_level
+          have two_le_k : 2 ≤ 2 ^ (l + 1) * k := by
+            have one_le_k : 1 ≤ k := by
+              by_contra k_zero
+              have k_zero : k = 0 := not_one_le_k k_zero
+              have even_k : Even 0 := even_zero
+              rw[← k_zero] at even_k
+              exact (Nat.even_iff_not_odd.mp even_k) k_odd
+            have two_le_expr : 2 ≤ 2 ^ (l + 1) := two_le_pow_two l
+            exact Nat.mul_le_mul two_le_expr one_le_k
+          have lower_level_statement_2 : (m / 2 + 1) * 2 = (2 ^ l * k) * 2 := mul_right 2 lower_level_statement
+          calc m + 2 = (2 * m' - 2) + 2 := by rw[m_m'_relationship]
+          _ = (m' * 2 - 2) + 2 := by ring_nf
+          _ = ((m / 2 + 1) * 2 - 2) + 2 := by rw[m'_m_relationship]
+          _ = ((2 ^ l * k) * 2 - 2) + 2 := by rw[lower_level_statement_2]
+          _ = (2 ^ (l + 1) * k - 2) + 2 := by ring_nf
+          _ = 2 ^ (l + 1) * k := Nat.sub_add_self_right (2 ^ (l + 1) * k) 2 two_le_k
     · use 1
       use m'
       constructor
       · exact Nat.le.refl
       · constructor
-        · sorry
+        · exact Nat.odd_iff_not_even.mpr m'_even
         · rw[m'H]
           ring
-
+snip end
 
 problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A := by
   have ⟨odd_n, m_eq_2_mod_3⟩ : Odd n ∧ m ≡ 2 [MOD 3] := n_odd_and_m_eq_2_mod_3 m n A h
   by_contra even_a
   have even_a := (@Nat.even_iff_not_odd A).mpr even_a
   have even_m : Even m := sorry
+  have zero_lt_m : 0 < m := sorry
+  obtain ⟨l, m₁, ⟨one_le_l, odd_m₁, m_factorisation⟩⟩ := two_n_and_rest_factorisation m even_m zero_lt_m
+  by_cases l_eq_one : (l = 1)
+  · rw [l_eq_one] at m_factorisation
+    ring_nf at m_factorisation
+    have : m₁ ≡ 1 [MOD 4] ∨ m₁ ≡ 3 [MOD 4] := by
+      obtain ⟨a, aH⟩ := odd_m₁
+      obtain even_a | odd_a := Nat.even_or_odd a
+      · obtain ⟨b, bH⟩ := even_a
+        left
+        rw[aH]
+        rw[bH]
+        dsimp [Nat.ModEq]
+        ring_nf
+        simp
+      · obtain ⟨b, bH⟩ := odd_a
+        right
+        rw[aH]
+        rw[bH]
+        dsimp [Nat.ModEq]
+        ring_nf
+        simp
+    have m_eq_2_mod_4 : m ≡ 2 [MOD 4] := by
+      obtain left | right := this
+      · rw[m_factorisation]
+        rw[show 2 = 1 * 2 by rfl]
+        apply Nat.ModEq.mul
+        exact left
+        ring_nf
+        rfl
+      · rw[m_factorisation]
+        --dsimp[Nat.ModEq] at right
+        --dsimp[Nat.ModEq]
+        calc m₁ * 2 ≡ 3 * 2 [MOD 4] := Nat.ModEq.mul right (show 2 ≡ 2 [MOD 4] by rfl)
+          _ ≡ 2 [MOD 4] := (show 3 * 2 ≡ 2 [MOD 4] by rfl)
+    sorry
+  ·
+    have one_lt_l : 1 < l := by
+      obtain left | right := LE.le.lt_or_eq one_le_l
+      exact left
+      exfalso
+      apply l_eq_one
+      exact right.symm
+    have l_eq_2 : l = 2 := sorry
+    have m_eq_4m₁ : m = 4*m₁ := sorry
+    have m₁_eq_2_mod3 : m₁ ≡ 2 [MOD 3] := sorry
+    have m₁_eq_5_mod6 : m₁ ≡ 5 [MOD 6] := sorry
+
+    -- from Thue's lemma
+    have k : ℕ := sorry
+    have k_constraints : k = 1 ∨ k = 2 ∨ k = 3 := sorry
+    have x : ℕ := sorry
+    have y : ℕ := sorry
+    have expression : 3 * x ^ 2 + y ^ 2 = k * m₁ := sorry
+
+  -- we then proceed to get contradiction for each k separately
+    sorry
