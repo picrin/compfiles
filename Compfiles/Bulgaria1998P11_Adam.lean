@@ -64,7 +64,7 @@ lemma zero_pow_mod_3 {m n : ℕ} (h1 : n > 0) (h2 : m ≡ 0 [MOD 3]) : m ^ n ≡
     exact IH
     exact h2
 
-lemma one_pow_mod_3 {m n : ℕ} (h1 : n > 0) (h2 : m ≡ 1 [MOD 3]) : m ^ n ≡ 1 [MOD 3]:= by
+lemma zero_pow_mod_2 {m n : ℕ} (h1 : n > 0) (h2 : m ≡ 0 [MOD 2]) : m ^ n ≡ 0 [MOD 2]:= by
   match n with
   | 0 =>
     contradiction
@@ -72,14 +72,14 @@ lemma one_pow_mod_3 {m n : ℕ} (h1 : n > 0) (h2 : m ≡ 1 [MOD 3]) : m ^ n ≡ 
     rw[show m ^ 1 = m by ring]
     exact h2
   | k + 2 =>
-    have IH := one_pow_mod_3 (show k + 1 > 0 by positivity) h2
+    have IH := zero_pow_mod_2 (show k + 1 > 0 by positivity) h2
     rw[show m ^ (k + 2) = m ^ (k + 1) * m by ring]
-    rw[show 1 = 1 * 1 by ring]
+    rw[show 0 = 0 * 0 by ring]
     apply Nat.ModEq.mul
     exact IH
     exact h2
 
-lemma one_pow_mod_2 {m n : ℕ} (h2 : m ≡ 1 [MOD 2]) : m ^ n ≡ 1 [MOD 2]:= by
+lemma one_pow_mod_3 {m n : ℕ} (h2 : m ≡ 1 [MOD 3]) : m ^ n ≡ 1 [MOD 3]:= by
   match n with
   | 0 =>
     rw[show m ^ 0 = 1 by ring]
@@ -87,7 +87,7 @@ lemma one_pow_mod_2 {m n : ℕ} (h2 : m ≡ 1 [MOD 2]) : m ^ n ≡ 1 [MOD 2]:= b
     rw[show m ^ 1 = m by ring]
     exact h2
   | k + 2 =>
-    have IH := @one_pow_mod_2 m (k+1) h2
+    have IH := @one_pow_mod_3 m (k+1) h2
     rw[show m ^ (k + 2) = m ^ (k + 1) * m by ring]
     rw[show 1 = 1 * 1 by ring]
     apply Nat.ModEq.mul
@@ -158,7 +158,7 @@ theorem n_odd_and_m_eq_2_mod_3 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : O
     · have towards_contradiction : 0 ≡ 2 [MOD 3] := by
         rw[show 2 = 1 + 1 by ring]
         calc 0 ≡ m ^ n + 1 [MOD 3] := h_mod_3
-        _ ≡ 1 + 1 [MOD 3] := Nat.ModEq.add (one_pow_mod_3 n_gt_zero mod_case) rfl
+        _ ≡ 1 + 1 [MOD 3] := Nat.ModEq.add (one_pow_mod_3 mod_case) rfl
       contradiction
     · by_cases n_even : Even n
       · have towards_contradiction : 0 ≡ 2 [MOD 3] := by
@@ -283,7 +283,6 @@ lemma two_n_and_rest_factorisation (m : ℕ) (even_m : Even m) (h: 0 < m) : ∃ 
         · exact Nat.odd_iff_not_even.mpr m'_even
         · rw[m'H]
           ring
-snip end
 
 lemma m_mod_2_contradiction (m n A : ℕ)
                             (even_m : Even m)
@@ -365,12 +364,12 @@ lemma too_good_to_be_true (n l : ℕ)
   dsimp[Nat.ModEq] at expression_eq_4_mod_8
   simp at expression_eq_4_mod_8
 
+snip end
+
 problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A := by
   have ⟨odd_n, m_eq_2_mod_3⟩ : Odd n ∧ m ≡ 2 [MOD 3] := n_odd_and_m_eq_2_mod_3 m n A h
   by_contra even_A
   have even_A := (@Nat.even_iff_not_odd A).mpr even_A
-  have even_m : Even m := by
-    sorry
   have zero_lt_m : 0 < m := by
     by_contra m_eq_0
     have m_eq_0 : m = 0 := by
@@ -380,6 +379,58 @@ problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A :
     have : 1 + 3 ^ n > 0 := by positivity
     rw[← h] at this
     contradiction
+  have zero_lt_n : 0 < n := by
+    by_contra zero_eq_n
+    have zero_eq_n : 0 = n := by simp_all only [Nat.odd_iff_not_even, not_lt, nonpos_iff_eq_zero]
+    rw[← zero_eq_n] at h
+    ring_nf at h
+    have : 0 ≡ 2 [MOD 3] := by
+      calc 0 ≡ m * A * 3 [MOD 3] := by
+                rw[show 0 = 0 * (m * A) by ring]
+                rw[show m * A * 3 = 3 * (m * A) by ring]
+                apply Nat.ModEq.mul
+                rfl
+                rfl
+            _ ≡ 2 [MOD 3] := by rw[h]
+    contradiction
+  have even_m : Even m := by
+    by_contra odd_m
+    have odd_m := Nat.odd_iff_not_even.mpr odd_m
+    obtain ⟨a, Ha⟩ := odd_m
+    have : m ≡ 1 [MOD 2] := by
+      rw[Ha]
+      nth_rw 2 [show 1 = 0 * a + 1 by ring]
+      apply Nat.ModEq.add
+      apply Nat.ModEq.mul
+      rfl
+      rfl
+      rfl
+    have towards_contradiction : 0 ≡ 1 [MOD 2] := by
+      calc  0 ≡ 3 * m * A [MOD 2] := by
+                obtain ⟨a, Ha⟩ := even_A
+                rw[Ha]
+                rw[show a + a = 2 * a by ring]
+                rw[show 3 * m * (2 * a) = 2 * (3 * m * a) by ring]
+                rw[show 0 = 0 * (3 * m * a) by ring]
+                apply Nat.ModEq.mul
+                rfl
+                rfl
+            _ ≡ (m + 3)^n + 1 [MOD 2] := by rw[h]
+            _ ≡ 1 [MOD 2] := by
+                nth_rw 2 [show 1 = 0 + 1 by rfl]
+                apply Nat.ModEq.add
+                have : m + 3 ≡ 0 [MOD 2] := by
+                  calc  m + 3 ≡ 1 + 1 [MOD 2] := by
+                                apply Nat.ModEq.add
+                                exact this
+                                rfl
+                        _ ≡ 0 [MOD 2] := by
+                                ring_nf
+                                rfl
+                exact zero_pow_mod_2 zero_lt_n this
+                rfl
+    contradiction
+
   obtain ⟨l, m₁, ⟨one_le_l, odd_m₁, m_factorisation⟩⟩ := two_n_and_rest_factorisation m even_m zero_lt_m
   by_cases l_eq_one : (l = 1)
   · rw [l_eq_one] at m_factorisation
