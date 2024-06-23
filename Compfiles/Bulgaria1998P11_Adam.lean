@@ -515,13 +515,98 @@ problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A :
         exfalso
         exact too_good_to_be_true n l (show 3 ≤ l by exact left) two_pow_l_divides_expresion expression_eq_4_mod_8
       · exact right.symm
-    have m_eq_4m₁ : m = 4 * m₁ := by
+
+    have m_eq_4_m₁ : m = 4 * m₁ := by
       rw[l_eq_2] at m_factorisation
       ring_nf at m_factorisation
       ring_nf
       exact m_factorisation
-    have m₁_eq_2_mod3 : m₁ ≡ 2 [MOD 3] := sorry
-    have m₁_eq_5_mod6 : m₁ ≡ 5 [MOD 6] := sorry
+
+    have m₁_divides_expresion : m₁ ∣ (3^n + 1) := by
+      have m_divides_expression : m ∣ (3 ^ n) + 1 := by
+        exact (@Nat.modEq_zero_iff_dvd m (3^n + 1)).mp eq_2.symm
+      dsimp[Dvd.dvd]
+      obtain ⟨a, Ha⟩ := m_divides_expression
+      use 2 ^ l * a
+      rw[show m₁ * (2 ^ l * a) = (2 ^ l * m₁) * a by ring]
+      rw[← m_factorisation]
+      exact Ha
+
+    have m₁_eq_2_mod_3 : m₁ ≡ 2 [MOD 3] := by
+      have step_1 : 4 * m₁ ≡ 2 [MOD 3] := by
+        rw[m_eq_4_m₁] at m_eq_2_mod_3
+        exact m_eq_2_mod_3
+      have step_2 : 4 * m₁ ≡ m₁ [MOD 3] := by
+        nth_rw 2 [show m₁ = 1 * m₁ by ring]
+        apply Nat.ModEq.mul
+        rfl
+        rfl
+      calc  m₁ ≡ 4 * m₁ [MOD 3] := step_2.symm
+            _ ≡ 2 [MOD 3] := step_1
+    have m₁_eq_5_mod_6 : m₁ ≡ 5 [MOD 6] := by
+      mod_cases m_mod_six : m₁ % 6
+      · have step_1: m₁ * 2 ≡ 0 * 2 [MOD 6]:= Nat.ModEq.mul_right 2 m_mod_six
+        have step_2: m₁ * 2 ≡ 2 * 2 [MOD 3 * 2] := Nat.ModEq.mul_right' 2 m₁_eq_2_mod_3
+        simp at step_1
+        simp at step_2
+        exfalso
+        have := Nat.ModEq.trans step_2.symm step_1
+        contradiction
+      · have step_1: m₁ * 2 ≡ 1 * 2 [MOD 6]:= Nat.ModEq.mul_right 2 m_mod_six
+        have step_2: m₁ * 2 ≡ 2 * 2 [MOD 3 * 2] := Nat.ModEq.mul_right' 2 m₁_eq_2_mod_3
+        simp at step_1
+        simp at step_2
+        exfalso
+        have := Nat.ModEq.trans step_2.symm step_1
+        contradiction
+      · have : m₁ ≡ 1 [MOD 2] := by
+          obtain ⟨a, Ha⟩ := odd_m₁
+          rw[show 1 = 0 + 1 by norm_num]
+          rw[Ha]
+          apply Nat.ModEq.add
+          dsimp[Nat.ModEq]
+          simp
+          rfl
+        have step_1: m₁ * 2 ≡ 2 * 2 [MOD 3 * 2] := Nat.ModEq.mul_right' 2 m₁_eq_2_mod_3
+        have step_2: m₁ * 3 ≡ 1 * 3 [MOD 2 * 3] := Nat.ModEq.mul_right' 3 this
+        simp at step_1
+        simp at step_2
+        have step_3 : m₁ * 3 + 2 * (m₁ * 2) ≡ 3 + 2 * 4 [MOD 6]:= by
+          apply Nat.ModEq.add
+          nth_rw 2 [show 3 = 1 * 3 by norm_num]
+          exact step_2
+          apply Nat.ModEq.mul
+          rfl
+          exact step_1
+        ring_nf at step_3
+        have : 11 ≡ 5 * 7 [MOD 6] := rfl
+        have step_4 : m₁ * 7 ≡ 5 * 7 [MOD 6] := Nat.ModEq.trans step_3 this
+        calc  m₁ ≡ m₁ * 7 [MOD 6] := by
+                  nth_rw 1 [show m₁ = m₁ * 1 by ring]
+                  apply Nat.ModEq.mul
+                  rfl
+                  rfl
+              _ ≡ 5 * 7 [MOD 6] := step_4
+              _ ≡ 5 [MOD 6] := by
+                  nth_rw 2 [show 5 = 5 * 1 by ring]
+                  apply Nat.ModEq.mul
+                  rfl
+                  rfl
+      · have step_1: m₁ * 2 ≡ 3 * 2 [MOD 6]:= Nat.ModEq.mul_right 2 m_mod_six
+        have step_2: m₁ * 2 ≡ 2 * 2 [MOD 3 * 2] := Nat.ModEq.mul_right' 2 m₁_eq_2_mod_3
+        simp at step_1
+        simp at step_2
+        exfalso
+        have := Nat.ModEq.trans step_2.symm step_1
+        contradiction
+      · have step_1: m₁ * 2 ≡ 4 * 2 [MOD 6]:= Nat.ModEq.mul_right 2 m_mod_six
+        have step_2: m₁ * 2 ≡ 2 * 2 [MOD 3 * 2] := Nat.ModEq.mul_right' 2 m₁_eq_2_mod_3
+        simp at step_1
+        simp at step_2
+        exfalso
+        have := Nat.ModEq.trans step_2.symm step_1
+        contradiction
+      · exact m_mod_six
 
     -- from Thue's lemma
     have k : ℕ := sorry
