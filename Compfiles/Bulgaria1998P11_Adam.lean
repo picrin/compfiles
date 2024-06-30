@@ -681,21 +681,36 @@ problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A :
     have := Int.modEq_zero_iff_dvd.mp expression
     obtain ⟨s, Hs⟩ := this
 
-    have : 3 * x ^ 2 + y ^ 2 ≤ 4 * m₁ := by
+    have upper_bound_expression: 3 * x ^ 2 + y ^ 2 ≤ 4 * m₁ := by
       linarith
-    rw[Hs] at this
+    rw[Hs] at upper_bound_expression
+    rw[show m₁ * s = s * m₁ by ring] at upper_bound_expression
+    have zero_le_m₁ : 0 ≤ (m₁ : ℤ) := by positivity
+    rw[m_eq_4_m₁] at zero_lt_m
+    have zero_lt_m₁ : 0 < @Nat.cast ℤ _ m₁ := by linarith
 
-    rw[show m₁ * s = s * m₁ by ring] at this
+    have upper_bound_s : s ≤ 4 := by
+      exact le_of_mul_le_mul_right upper_bound_expression zero_lt_m₁
 
-    have : 0 < 3 * x ^ 2 + y ^ 2 := by
-      have : 0 < 3 * x := by
-        sorry
-      sorry
+    have lower_bound_expression : 0 < 3 * x ^ 2 + y ^ 2 := by
+      have : 0 < 3 * x ^ 2 := by
+        linarith
+      have : 0 ≤ y ^ 2 := by positivity
+      linarith
+    rw[Hs] at lower_bound_expression
 
-    have : s ≤ 4 := by
-      sorry
+    rw[show (0 : ℤ) = m₁ * 0 by ring] at lower_bound_expression
+    have lower_bound_s : 0 < s := by
+      exact lt_of_mul_lt_mul_of_nonneg_left lower_bound_expression zero_le_m₁
 
-    have k_constraints : k = 1 ∨ k = 2 ∨ k = 3 := sorry
-    -- we then proceed to get contradiction for each k separately
+    obtain (left : ((1 : ℤ) = s)) | (right : 1 < s) := LE.le.eq_or_lt (Order.succ_le_of_lt lower_bound_s)
+    rw[left.symm] at Hs
 
     sorry
+    obtain (left : ((2 : ℤ) = s)) | (right : 2 < s) := LE.le.eq_or_lt (Order.succ_le_of_lt right)
+    sorry
+    obtain (left : ((3 : ℤ) = s)) | (right : 3 < s) := LE.le.eq_or_lt (Order.succ_le_of_lt right)
+    sorry
+    obtain (left : ((4 : ℤ) = s)) | (right : 4 < s) := LE.le.eq_or_lt (Order.succ_le_of_lt right)
+    sorry
+    linarith
