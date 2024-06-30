@@ -5,6 +5,7 @@ Authors: David Renshaw
 -/
 
 import Mathlib.Tactic
+import Mathlib.Data.Num.Lemmas
 
 import ProblemExtraction
 
@@ -364,6 +365,15 @@ lemma too_good_to_be_true (n l : ℕ)
   dsimp[Nat.ModEq] at expression_eq_4_mod_8
   simp at expression_eq_4_mod_8
 
+lemma Thue's_lemma (a m : ℤ) : ∃ (x y : ℤ),  a * x + y ≡ 0 [ZMOD m] ∧ 0 < x ^ 2 ∧ x ^ 2 < m ∧ y ^ 2 ≤ m :=
+  sorry
+
+lemma mod_z_of_mod_n {a b m : ℕ} (h : a ≡ b [MOD m]) : a ≡ b [ZMOD m] := by
+  dsimp [Int.ModEq]
+  rw[show a % m = @Nat.cast ℤ _ (a % m) by norm_num]
+  rw[h]
+  norm_num
+
 snip end
 
 problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A := by
@@ -609,10 +619,83 @@ problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A :
       · exact m_mod_six
 
     -- from Thue's lemma
-    have k : ℕ := sorry
+    obtain ⟨k, Hk⟩ := odd_n
+    have exists_a : ∃ (a : ℕ ), a = 3 ^ (k + 1) := by
+      use 3 ^ (k + 1)
+    obtain ⟨a, Ha⟩ := exists_a
+    have m₁_divides_for_thues_lemma : m₁ ∣ a^2 + 3 := by
+      apply Nat.modEq_zero_iff_dvd.mp
+      have step_1:= Nat.modEq_zero_iff_dvd.mpr m₁_divides_expresion
+      rw[Hk] at step_1
+      have step_2: 3 * (3 ^ (2 * k + 1) + 1) ≡ 3 * 0 [MOD m₁] := Nat.ModEq.mul_left 3 step_1
+      ring_nf at step_2
+      rw[show 3 ^ (k * 2) * 9 = 3 ^ ((k + 1) * 2 ) by ring] at step_2
+      have step_3 : 3 ^ ((k + 1) * 2) = (3 ^ (k + 1)) ^ (2) :=
+        pow_mul 3 (k + 1) 2
+      rw[step_3] at step_2
+      rw[← Ha] at step_2
+      ring_nf
+      exact step_2
+
+    obtain ⟨x, y, x_y_props⟩ := Thue's_lemma a m₁
+    obtain ⟨mod_expression, x_lower, x_higher, y_higher⟩ := x_y_props
+
+    have lifted_m₁_result := mod_z_of_mod_n (Nat.modEq_zero_iff_dvd.mpr m₁_divides_for_thues_lemma)
+    norm_num at lifted_m₁_result
+
+    have step_1 : a ^ 2 ≡ -3 [ZMOD m₁] := by
+      rw[show -3 = 0 - 3 by ring]
+      rw[show (@Nat.cast ℤ _ a) ^ 2 = ↑a ^ 2 + 3 - 3 by ring]
+      apply Int.ModEq.sub
+      exact lifted_m₁_result
+      rfl
+
+    have step_2 : a * x ≡ -y [ZMOD m₁] := by
+      rw[show -y = 0 - y by ring]
+      rw[show a * x = a * x + y - y by ring]
+      apply Int.ModEq.sub
+      exact mod_expression
+      rfl
+
+    have step_3 : a ^ 2 * x ^ 2 ≡ y ^ 2 [ZMOD m₁] := by
+      rw[show a ^ 2 * x ^ 2 = (a * x) * (a * x) by ring]
+      rw[show y ^ 2 = (-y) * (-y) by ring]
+      apply Int.ModEq.mul
+      exact step_2
+      exact step_2
+
+    have step_4: (-3) * x ^ 2 ≡ y ^ 2 [ZMOD m₁] := by
+      trans a ^ 2 * x ^ 2
+      · exact? says exact Int.ModEq.mul (id (Int.ModEq.symm step_1)) rfl
+      · exact? says exact step_3
+
+    have expression : 3 * x ^ 2 + y ^ 2 ≡ 0 [ZMOD m₁] := by
+      have : ((-3) * x ^ 2) + (3 * x ^ 2)  ≡ (y ^ 2) + (3 * x ^ 2) [ZMOD m₁] := by
+        apply Int.ModEq.add
+        exact step_4
+        rfl
+      rw[show (-3) * x ^ 2 + (3 * x ^ 2) = 0 by ring] at this
+      rw[show y ^ 2 + 3 * x ^ 2 = 3 * x ^ 2 + y ^ 2 by ring] at this
+      exact this.symm
+
+    have := Int.modEq_zero_iff_dvd.mp expression
+    obtain ⟨s, Hs⟩ := this
+
+    have : 3 * x ^ 2 + y ^ 2 ≤ 4 * m₁ := by
+      linarith
+    rw[Hs] at this
+
+    rw[show m₁ * s = s * m₁ by ring] at this
+
+    have : 0 < 3 * x ^ 2 + y ^ 2 := by
+      have : 0 < 3 * x := by
+        sorry
+      sorry
+
+    have : s ≤ 4 := by
+      sorry
+
     have k_constraints : k = 1 ∨ k = 2 ∨ k = 3 := sorry
-    have x : ℕ := sorry
-    have y : ℕ := sorry
-    have expression : 3 * x ^ 2 + y ^ 2 = k * m₁ := sorry
     -- we then proceed to get contradiction for each k separately
+
     sorry
