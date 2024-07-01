@@ -376,6 +376,31 @@ lemma mod_z_of_mod_n {a b m : ℕ} (h : a ≡ b [MOD m]) : a ≡ b [ZMOD m] := b
 
 snip end
 
+lemma square_contra_mod_3 {y : ℤ} (h: y ^ 2 ≡ 2 [ZMOD 3]) : False := by
+  rw [show y ^ 2 = y * y by ring] at h
+  mod_cases y_mod_3 : y % 3
+  · have : y * y ≡ 0 * 0 [ZMOD 3]:= by
+      apply Int.ModEq.mul
+      exact y_mod_3
+      exact y_mod_3
+    rw[show (0 : ℤ) * 0 = 0 by norm_num] at this
+    have := Int.ModEq.trans h.symm this
+    contradiction
+  · have : y * y ≡ 1 * 1 [ZMOD 3]:= by
+      apply Int.ModEq.mul
+      exact y_mod_3
+      exact y_mod_3
+    rw[show (1 : ℤ) * 1 = 1 by norm_num] at this
+    have := Int.ModEq.trans h.symm this
+    contradiction
+  · have : y * y ≡ 2 * 2 [ZMOD 3]:= by
+      apply Int.ModEq.mul
+      exact y_mod_3
+      exact y_mod_3
+    have := Int.ModEq.trans h.symm this
+    contradiction
+
+
 problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A := by
   have ⟨odd_n, m_eq_2_mod_3⟩ : Odd n ∧ m ≡ 2 [MOD 3] := n_odd_and_m_eq_2_mod_3 m n A h
   by_contra even_A
@@ -618,7 +643,6 @@ problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A :
         contradiction
       · exact m_mod_six
 
-    -- from Thue's lemma
     obtain ⟨k, Hk⟩ := odd_n
     have exists_a : ∃ (a : ℕ ), a = 3 ^ (k + 1) := by
       use 3 ^ (k + 1)
@@ -703,14 +727,57 @@ problem bulgaria1998_p11 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : Odd A :
     have lower_bound_s : 0 < s := by
       exact lt_of_mul_lt_mul_of_nonneg_left lower_bound_expression zero_le_m₁
 
+    have := mod_z_of_mod_n m₁_eq_5_mod_6
+    have m₁_sub_5_mod_6 : ↑m₁ - 5 ≡ 0 [ZMOD 6] := by
+      rw[show (0 : ℤ) = (5 : ℤ) - 5 by ring]
+      apply Int.ModEq.sub
+      exact this
+      rfl
+
+    have := mod_z_of_mod_n m₁_eq_2_mod_3
+    have m₁_sub_2_mod_3 : ↑m₁ - 2 ≡ 0 [ZMOD 3] := by
+      rw[show (0 : ℤ) = (2 : ℤ) - 2 by ring]
+      apply Int.ModEq.sub
+      exact this
+      rfl
+
     obtain (left : ((1 : ℤ) = s)) | (right : 1 < s) := LE.le.eq_or_lt (Order.succ_le_of_lt lower_bound_s)
     rw[left.symm] at Hs
-
-    sorry
+    have := Int.modEq_zero_iff_dvd.mp m₁_sub_5_mod_6
+    dsimp[Dvd.dvd] at this
+    obtain ⟨c, this⟩ := this
+    have expr_m₁_mod_6 : ↑m₁ = 6 * c + 5 := by linarith
+    rw[expr_m₁_mod_6] at Hs
+    ring_nf at Hs
+    have := calc y ^ 2 ≡ x ^ 2 * 3 + y ^ 2 [ZMOD 3] := by
+                        nth_rw 1 [show y ^ 2 = 0 + y ^ 2 by ring]
+                        apply Int.ModEq.add
+                        dsimp[Int.ModEq]
+                        simp
+                        rfl
+          _ ≡ (5 + c * 6) [ZMOD 3] := by rw[Hs]
+          _ ≡ 2 [ZMOD 3] := by
+            have zmod : 5 + (c : ZMod 3) * 6 = 2 := by
+              reduce_mod_char
+            have : (3 : ℤ) = (3 : ℕ) := by rw [Nat.cast_ofNat]
+            rw[this]
+            rw[← ZMod.intCast_eq_intCast_iff]
+            rw[Int.cast_ofNat]
+            rw[← zmod]
+            norm_cast
+    exact square_contra_mod_3 this
     obtain (left : ((2 : ℤ) = s)) | (right : 2 < s) := LE.le.eq_or_lt (Order.succ_le_of_lt right)
+    rw[left.symm] at Hs
+    have := Int.modEq_zero_iff_dvd.mp m₁_sub_5_mod_6
+    dsimp[Dvd.dvd] at this
+    obtain ⟨c, this⟩ := this
+    have expr_m₁_mod_6 : ↑m₁ = 6 * c + 5 := by linarith
+    rw[expr_m₁_mod_6] at Hs
+    ring_nf at Hs
     sorry
     obtain (left : ((3 : ℤ) = s)) | (right : 3 < s) := LE.le.eq_or_lt (Order.succ_le_of_lt right)
     sorry
     obtain (left : ((4 : ℤ) = s)) | (right : 4 < s) := LE.le.eq_or_lt (Order.succ_le_of_lt right)
-    sorry
+    rw[left.symm] at Hs
+    linarith
     linarith
