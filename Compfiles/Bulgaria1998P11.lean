@@ -97,9 +97,6 @@ theorem n_odd_and_m_eq_2_mod_3 (m n A : ℕ) (h : 3 * m * A = (m + 3)^n + 1) : O
       ring
     contradiction
 
-lemma mul_right {a b : ℕ} (c : ℕ) (H : a = b) : (a * c = b * c) := by
-  rw[H]
-
 lemma not_one_le_k {k : ℕ} (h : ¬1 ≤ k) : k = 0 := by
   simp_all only [not_le, Nat.lt_one_iff]
 
@@ -150,7 +147,7 @@ lemma two_n_and_rest_factorisation (m : ℕ) (even_m : Even m) (h: 0 < m) : ∃ 
               exact (Nat.even_iff_not_odd.mp even_k) k_odd
             have two_le_expr : 2 ≤ 2 ^ (l + 1) := two_le_pow_two l
             exact Nat.mul_le_mul two_le_expr one_le_k
-          have lower_level_statement_2 : (m / 2 + 1) * 2 = (2 ^ l * k) * 2 := mul_right 2 lower_level_statement
+          have lower_level_statement_2 : (m / 2 + 1) * 2 = (2 ^ l * k) * 2 := by omega
           calc  m + 2 = (2 * m' - 2) + 2 := by rw[m_m'_relationship]
                 _ = (m' * 2 - 2) + 2 := by ring_nf
                 _ = ((m / 2 + 1) * 2 - 2) + 2 := by rw[m'_m_relationship]
